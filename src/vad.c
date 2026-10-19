@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "pav_analysis.h"
 
 #include "vad.h"
 
@@ -34,15 +35,15 @@ typedef struct {
 Features compute_features(const float *x, int N) {
   /*
    * Input: x[i] : i=0 .... N-1 
-   * Ouput: computed features
-   */
-  /* 
-   * DELETE and include a call to your own functions
-   *
-   * For the moment, compute random value between 0 and 1 
+   * Output: computed features
    */
   Features feat;
-  feat.zcr = feat.p = feat.am = (float) rand()/RAND_MAX;
+
+  /* Llamadas reales a las funciones implementadas en pav_analysis.c */
+  feat.p   = compute_power(x, N);
+  feat.am  = compute_am(x, N);
+  feat.zcr = compute_zcr(x, N, 16000);
+
   return feat;
 }
 
@@ -77,7 +78,7 @@ unsigned int vad_frame_size(VAD_DATA *vad_data) {
  * using a Finite State Automata
  */
 
-VAD_STATE vad(VAD_DATA *vad_data, float *x) {
+VAD_STATE vad(VAD_DATA *vad_data, float *x, float umbral) {
 
   /* 
    * TODO: You can change this, using your own features,
@@ -93,12 +94,12 @@ VAD_STATE vad(VAD_DATA *vad_data, float *x) {
     break;
 
   case ST_SILENCE:
-    if (f.p > 0.95)
+    if (f.p > umbral)
       vad_data->state = ST_VOICE;
     break;
 
   case ST_VOICE:
-    if (f.p < 0.01)
+    if (f.p < umbral)
       vad_data->state = ST_SILENCE;
     break;
 
